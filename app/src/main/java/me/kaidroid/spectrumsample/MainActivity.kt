@@ -6,11 +6,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import me.kaidroid.spectrumsample.databinding.ActivityMainBinding
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
@@ -22,9 +25,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     lateinit var imageManager: ImageManager
 
+    lateinit var viewBinder: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        viewBinder = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener { view ->
@@ -45,7 +51,10 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
         launch {
             val outFile = imageManager.resize("resized1.jpg", 1024, 100)
-
+            GlideApp.with(this@MainActivity)
+                .load(outFile)
+                .centerCrop()
+                .into(viewBinder.mainContainer.image)
         }
     }
 

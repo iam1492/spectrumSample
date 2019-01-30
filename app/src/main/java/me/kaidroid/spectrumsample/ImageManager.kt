@@ -18,8 +18,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class ImageManager constructor(val contentResolver: ContentResolver,
-                               val fileUri: Uri) {
+class ImageManager constructor(contentResolver: ContentResolver, fileUri: Uri) {
 
     private val spectrum: Spectrum = Spectrum.make(SpectrumLogcatLogger(Log.INFO), DefaultPlugins.get())
     private val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
