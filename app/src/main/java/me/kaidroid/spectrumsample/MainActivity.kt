@@ -7,8 +7,18 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), CoroutineScope {
+
+    private val job = Job()
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     lateinit var imageManager: ImageManager
 
@@ -31,6 +41,11 @@ class MainActivity : AppCompatActivity() {
         val fileUri = data?.data
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && fileUri != null) {
             imageManager = ImageManager(contentResolver, fileUri)
+        }
+
+        launch {
+            val outFile = imageManager.resize("resized1.jpg", 1024, 100)
+
         }
     }
 
