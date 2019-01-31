@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    lateinit var imageManager: ImageManager
+    var imageManager: ImageManager? = null
 
     lateinit var viewBinder: ActivityMainBinding
 
@@ -31,13 +31,24 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         super.onCreate(savedInstanceState)
         viewBinder = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
+        viewBinder.mainContainer.resolution.setText(DEFAULT_RESOLUTION.toString())
+        viewBinder.mainContainer.quality.setText(DEFAULT_QUALITY.toString())
+
         setSupportActionBar(toolbar)
 
-        fab.setOnClickListener { view ->
+        fab.setOnClickListener {
             if (needStoragePermission()) {
                 requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_STORAGE)
             } else {
                 startImagePicker()
+            }
+        }
+
+        viewBinder.mainContainer.button.setOnClickListener {
+            if (useSpectrum()) {
+                resizeWithSpectrum()
+            } else {
+                resizeWithDefault()
             }
         }
     }
@@ -46,15 +57,35 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         super.onActivityResult(requestCode, resultCode, data)
         val fileUri = data?.data
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && fileUri != null) {
+
+            GlideApp.with(this@MainActivity)
+                .load(fileUri)
+                .centerCrop()
+                .into(viewBinder.mainContainer.image)
+
             imageManager = ImageManager(contentResolver, fileUri)
         }
+    }
 
-        launch {
-            val outFile = imageManager.resize("resized1.jpg", 1024, 100)
+    private fun resizeWithSpectrum() = launch {
+        imageManager?.resizeWithSpectrum(System.currentTimeMillis().toString(), getResolution(), getQuality()) { outFile, result ->
             GlideApp.with(this@MainActivity)
                 .load(outFile)
                 .centerCrop()
                 .into(viewBinder.mainContainer.image)
+
+            viewBinder.mainContainer.result.text = result.toString()
+        }
+    }
+
+    private fun resizeWithDefault() = launch {
+        imageManager?.resizeWithAndroidDefault(System.currentTimeMillis().toString(), getResolution(), getQuality()) { outFile, result ->
+            GlideApp.with(this@MainActivity)
+                .load(outFile)
+                .centerCrop()
+                .into(viewBinder.mainContainer.image)
+
+            viewBinder.mainContainer.result.text = result.toString()
         }
     }
 
@@ -71,11 +102,25 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         }
     }
 
+    private fun getResolution(): Int {
+        val resolution = viewBinder.mainContainer.resolution.text.toString()
+        return if (resolution.isNotEmpty()) resolution.toInt() else DEFAULT_RESOLUTION
+    }
+
+    private fun getQuality(): Int {
+        val quality = viewBinder.mainContainer.quality.text.toString()
+        return if (quality.isNotEmpty()) quality.toInt() else DEFAULT_QUALITY
+    }
+
+    private fun useSpectrum(): Boolean = viewBinder.mainContainer.toggleSwitch.isChecked
+
     private fun needStoragePermission() = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
 
     companion object {
         const val PICK_IMAGE_REQUEST = 1000
         const val MIME_TYPE_IMAGE = "image/*"
         const val REQUEST_STORAGE = 1
+        const val DEFAULT_RESOLUTION = 1024
+        const val DEFAULT_QUALITY = 100
     }
 }
