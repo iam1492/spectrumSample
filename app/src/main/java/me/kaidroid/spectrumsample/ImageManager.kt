@@ -3,7 +3,10 @@ package me.kaidroid.spectrumsample
 import android.content.ContentResolver
 import android.net.Uri
 import android.util.Log
-import com.facebook.spectrum.*
+import com.facebook.spectrum.DefaultPlugins
+import com.facebook.spectrum.EncodedImageSink
+import com.facebook.spectrum.EncodedImageSource
+import com.facebook.spectrum.Spectrum
 import com.facebook.spectrum.image.EncodedImageFormat
 import com.facebook.spectrum.logging.SpectrumLogcatLogger
 import com.facebook.spectrum.options.TranscodeOptions
@@ -13,19 +16,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 
 class ImageManager constructor(private val contentResolver: ContentResolver,
                                private val fileUri: Uri) {
 
     private val spectrum: Spectrum = Spectrum.make(SpectrumLogcatLogger(Log.INFO), DefaultPlugins.get())
-    private val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
 
     suspend fun resizeWithSpectrum(targetFileName: String, resolution: Int, quality: Int, result: (File, ResizeResult) -> Unit) = withContext(Dispatchers.IO) {
         val transcodeOptions = TranscodeOptions.Builder((EncodeRequirement(EncodedImageFormat.JPEG, quality)))
             .resize(ResizeRequirement.Mode.EXACT_OR_SMALLER, resolution)
             .build()
-
+        val inputStream = contentResolver.openInputStream(fileUri)
         var outputStream: FileOutputStream? = null
         try {
             val outputFile = Utils.getOutputFile(targetFileName)
@@ -83,8 +84,6 @@ class ImageManager constructor(private val contentResolver: ContentResolver,
                     "compress ratio[${((resultFileSize?.div(originalFileSize!!.toFloat()))?.times(100))}]%"
         }
     }
-
-
 
     companion object {
         const val TAG = "ImageManager"

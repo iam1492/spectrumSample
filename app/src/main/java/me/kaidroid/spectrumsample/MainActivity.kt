@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 .centerCrop()
                 .into(viewBinder.mainContainer.image)
 
-            viewBinder.mainContainer.result.text = result.toString()
+            printResult(result)
         }
     }
 
@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 .centerCrop()
                 .into(viewBinder.mainContainer.image)
 
-            viewBinder.mainContainer.result.text = result.toString()
+            printResult(result)
         }
     }
 
@@ -115,6 +115,14 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private fun useSpectrum(): Boolean = viewBinder.mainContainer.toggleSwitch.isChecked
 
     private fun needStoragePermission() = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+
+    private fun printResult(result: ImageManager.ResizeResult) {
+        viewBinder.mainContainer.result_resolution.text =
+            "${result.originalWidth}x${result.originalHeight} ==> ${result.resultWidth}x${result.resultHeight}"
+        viewBinder.mainContainer.result_size.text = "${result.originalFileSize} ==> ${result.resultFileSize}"
+        viewBinder.mainContainer.result_ratio.text =
+            "${((result.resultFileSize?.div(result.originalFileSize!!.toFloat()))?.times(100))}%"
+    }
 
     companion object {
         const val PICK_IMAGE_REQUEST = 1000
